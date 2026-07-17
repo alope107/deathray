@@ -84,13 +84,13 @@ const main = async () => {
         {
             color: [0., .98, 0., 1.],
             center: [.3, .6],
-            velocity: [-.001, .001],
+            velocity: [-.005, -.01],
             radius: .4
         },
         {
             color: [.99, 0., 0., 1.],
             center: [0, 0],
-            velocity: [.001, -.003],
+            velocity: [.01, -.003],
             radius: .15
         }
 

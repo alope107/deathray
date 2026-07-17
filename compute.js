@@ -16,5 +16,20 @@ ${circleStruct.code}
                                          1 /* CHANGE ME WHEN WORKGROUP SIZE CHANGES */);
         if(id > arrayLength(&circles)) {return;}
         circles[id].center += circles[id].velocity;
+
+        let wall = 1.;
+
+        if(circles[id].center.x > wall - circles[id].radius) {
+            circles[id].center.x = wall - circles[id].radius;
+        }
+        if(circles[id].center.x < circles[id].radius-wall) {
+            circles[id].center.x = circles[id].radius-wall;
+        }
+        if(circles[id].center.y > wall - circles[id].radius) {
+            circles[id].center.y = wall - circles[id].radius;
+        }
+        if(circles[id].center.y < circles[id].radius-wall) {
+            circles[id].center.y = circles[id].radius-wall;
+        }
     }
 `;
