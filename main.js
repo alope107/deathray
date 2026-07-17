@@ -69,7 +69,7 @@ const main = async () => {
         renderPassDescriptor.colorAttachments[0].view = ctx.getCurrentTexture().createView();
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(renderPipeline);
-        renderPass.draw(4);
+        renderPass.draw(21);
         renderPass.end();
 
         const commandBuffer = encoder.finish();
