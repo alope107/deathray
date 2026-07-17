@@ -70,11 +70,13 @@ const main = async () => {
         {
             color: [.99, 0., 0., 1.],
             center: [0, 0],
+            velocity: [.01, .03],
             radius: .15
         },
         {
             color: [0., .98, 0., 1.],
             center: [.3, .6],
+            velocity: [-.05, .08],
             radius: .4
         }
     ])
@@ -95,8 +97,6 @@ const main = async () => {
             {binding: 0, resource: circleBuffer},
         ]
     });
-
-    console.log(new Float32Array(circles.data));
 
     device.queue.writeBuffer(circleBuffer, 0, circles.data);
 
