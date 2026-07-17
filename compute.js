@@ -5,7 +5,8 @@ export const computeShaderCode = /* wgsl */ `
 ${global_invocation_index}
 ${circleStruct.code}
 
-@group(0) @binding(0) var<storage, read_write> circles : array<Circle>; 
+@group(0) @binding(0) var<storage, read> circlesOld : array<Circle>; 
+@group(0) @binding(1) var<storage, read_write> circlesNew : array<Circle>; 
 
 // TODO: better workgroup size UPDATE THE GLOBAL INDEX CALC IF CHANGED
 @compute @workgroup_size(1) fn applyPhysics(
@@ -14,27 +15,27 @@ ${circleStruct.code}
     @builtin(num_workgroups) num_workgroups: vec3<u32>) {
         let id = global_invocation_index(workgroup_id, local_invocation_index, num_workgroups,
                                          1 /* CHANGE ME WHEN WORKGROUP SIZE CHANGES */);
-        if(id > arrayLength(&circles)) {return;}
+        if(id > arrayLength(&circlesOld)) {return;}
 
         let gravity = vec2f(0, -.0001);
-        circles[id].velocity += gravity;
+        circlesNew[id].velocity = circlesOld[id].velocity + gravity;
 
-        circles[id].center += circles[id].velocity;
+        circlesNew[id].center = circlesOld[id].center + circlesNew[id].velocity;
 
         let wall = 1.;
         
 
-        if(circles[id].center.x > wall - circles[id].radius) {
-            circles[id].center.x = wall - circles[id].radius;
+        if(circlesNew[id].center.x > wall - circlesNew[id].radius) {
+            circlesNew[id].center.x = wall - circlesNew[id].radius;
         }
-        if(circles[id].center.x < circles[id].radius-wall) {
-            circles[id].center.x = circles[id].radius-wall;
+        if(circlesNew[id].center.x < circlesNew[id].radius-wall) {
+            circlesNew[id].center.x = circlesNew[id].radius-wall;
         }
-        if(circles[id].center.y > wall - circles[id].radius) {
-            circles[id].center.y = wall - circles[id].radius;
+        if(circlesNew[id].center.y > wall - circlesNew[id].radius) {
+            circlesNew[id].center.y = wall - circlesNew[id].radius;
         }
-        if(circles[id].center.y < circles[id].radius-wall) {
-            circles[id].center.y = circles[id].radius-wall;
+        if(circlesNew[id].center.y < circlesNew[id].radius-wall) {
+            circlesNew[id].center.y = circlesNew[id].radius-wall;
         }
     }
 `;
