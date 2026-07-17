@@ -22,7 +22,7 @@ struct VertexOutput {
 
     return VertexOutput(
         vec4f(circle.center + (r * vec2f(cos(angle), sin(angle))), 0, 1.),
-        circle.color
+        select(vec4(), circle.color, (vertexIdx & 1) == 0)
     );
 }
 

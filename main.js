@@ -2,7 +2,7 @@ import { renderShaderCode } from "./render.js";
 import { startResizeObservation } from "./resize.js";
 import { circleStruct } from "./structs.js";
 
-const POLYS_PER_CIRCLE = 10;
+const POLYS_PER_CIRCLE = 20;
 
 const main = async () => {
     const device = await (await navigator.gpu?.requestAdapter( {
