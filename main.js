@@ -37,7 +37,7 @@ const main = async () => {
 
     const renderModule = device.createShaderModule({
         label: "render module",
-        code: renderShaderCode
+        code: renderShaderCode(POLYS_PER_CIRCLE)
     });
     const renderPipeline = device.createRenderPipeline({
         label: "render pipeline",
@@ -68,14 +68,14 @@ const main = async () => {
 
     const circles = circleStruct.createFilledArray([
         {
-            color: [1, 0, 0, 1],
+            color: [.99, 0., 0., 1.],
             center: [0, 0],
-            radius: .1
+            radius: .15
         },
         {
-            color: [0, 1, 0, 1],
+            color: [0., .98, 0., 1.],
             center: [.3, .6],
-            radius: .3
+            radius: .4
         }
     ])
 
@@ -96,6 +96,8 @@ const main = async () => {
         ]
     });
 
+    console.log(new Float32Array(circles.data));
+
     device.queue.writeBuffer(circleBuffer, 0, circles.data);
 
 
@@ -106,7 +108,7 @@ const main = async () => {
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(renderPipeline);
         renderPass.setBindGroup(0, renderBindGroup);
-        renderPass.draw(33);
+        renderPass.draw(2*POLYS_PER_CIRCLE + 1, circles.count);
         renderPass.end();
 
         const commandBuffer = encoder.finish();

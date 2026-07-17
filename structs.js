@@ -30,7 +30,7 @@ export const circleStruct = (() => {
         circleData.forEach(({color, center, radius}, i) => {
             colorView.set(color, i*floatCount);
             centerView.set(center, i*floatCount);
-            radiusView.set(radius, i*floatCount);
+            radiusView.set([radius], i*floatCount);
         });
         return data;
     };
