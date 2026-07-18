@@ -46,8 +46,44 @@ export const circleStruct = (() => {
     };
 })();
 
-export const uniformsStruct = /* wgsl */ `
-struct Uniforms {
-    gravity: vec2f //8 bytes
-} // total 8 bytes
+export const uniformsStruct = (() => { 
+    const code = /* wgsl */ `
+        struct Uniforms {
+            gravity: vec2f,  //8 bytes
+            pointerLoc: vec2f, // 8 bytes, location of pointer
+            pointerPressed: u32, // 4 bytes, was the pointer first pressed this frame?
+            pointerHeld: u32 // 4 bytes, is the pointer currently held down?
+        } // total 24 bytes
 `;
+    const byteCount = 24;
+    const u32Count = byteCount/4;
+    const floatCount = byteCount/4;
+    const createEmpty = () => {
+        const data = new ArrayBuffer(byteCount);
+        return {
+            data,
+            views: {
+                gravityView: new Float32Array(data, 0),
+                pointerLocView: new Float32Array(data, 8),
+                pointerPressedView: new Uint32Array(data, 16),
+                pointerHeldView: new Uint32Array(data, 20),
+            },
+            count: 1
+        };
+    };
+    return {
+        code,
+        byteCount,
+        u32Count,
+        floatCount,
+        createEmpty,
+        createFilled: ({gravity, pointerLoc, pointerPressed, pointerHeld}) => {
+            const uniform = createEmpty();
+            uniform.views.gravityView.set(gravity, 0);
+            uniform.views.pointerLocView.set(pointerLoc, 0);
+            uniform.views.pointerPressedView.set([pointerPressed], 0);
+            uniform.views.pointerHeldView.set([pointerHeld], 0);
+            return uniform;
+        }
+    };
+})();

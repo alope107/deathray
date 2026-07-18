@@ -4,7 +4,7 @@ import { global_invocation_index } from "./linear_indexing.js";
 export const computeShaderCode = /* wgsl */ `
 ${global_invocation_index}
 ${circleStruct.code}
-${uniformsStruct}
+${uniformsStruct.code}
 
 @group(0) @binding(0) var<storage, read> circlesOld : array<Circle>; 
 @group(0) @binding(1) var<storage, read_write> circlesNew : array<Circle>;

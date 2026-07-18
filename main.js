@@ -1,7 +1,7 @@
 import { computeShaderCode } from "./compute.js";
 import { renderShaderCode } from "./render.js";
 import { startResizeObservation } from "./resize.js";
-import { circleStruct } from "./structs.js";
+import { circleStruct, uniformsStruct } from "./structs.js";
 import { randCircles } from "./random.js";
 
 let accel = {x: 0, y:-9.8, z:0};
@@ -105,12 +105,16 @@ const main = async () => {
                GPUBufferUsage.VERTEX
     });
 
-        // TODO: Move this info to structs.js
-    const uniformFloatCount = 2;
-    const uniformData = new Float32Array(uniformFloatCount);
+
+    let uniform = uniformsStruct.createFilled({
+            gravity: [accel.x/GRAVITY_FACTOR, accel.y/GRAVITY_FACTOR],
+            pointerLoc: [0, 0],//TODO
+            pointerHeld: 0,// TODO
+            pointerPressed: 0 // TODO
+        });
     const uniformBuffer = device.createBuffer({
         label: "uniform buffer",
-        size: uniformData.byteLength,
+        size: uniform.data.byteLength,
         usage: GPUBufferUsage.UNIFORM | 
                GPUBufferUsage.COPY_DST 
     });
@@ -153,7 +157,7 @@ const main = async () => {
 
     device.queue.writeBuffer(circlePingBuffer, 0, circles.data);
     device.queue.writeBuffer(circlePongBuffer, 0, circles.data);
-    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+    device.queue.writeBuffer(uniformBuffer, 0, uniform.data);
 
 
     let frameCount = 0;
@@ -180,9 +184,13 @@ const main = async () => {
     };
 
     const animationFrame = async (timestamp) => {
-        uniformData[0] = accel.x/GRAVITY_FACTOR;
-        uniformData[1] = accel.y/GRAVITY_FACTOR;
-        device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+        uniform = uniformsStruct.createFilled({
+            gravity: [accel.x/GRAVITY_FACTOR, accel.y/GRAVITY_FACTOR],
+            pointerLoc: [0, 0],//TODO
+            pointerHeld: 0,// TODO
+            pointerPressed: 0 // TODO
+        });
+        device.queue.writeBuffer(uniformBuffer, 0, uniform.data);
         render();
         requestAnimationFrame(animationFrame);
     };
