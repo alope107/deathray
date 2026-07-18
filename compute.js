@@ -19,8 +19,21 @@ ${circleStruct.code}
 
         let gravity = vec2f(0, -.0001);
         circlesNew[id].velocity = circlesOld[id].velocity + gravity;
-
         circlesNew[id].center = circlesOld[id].center + circlesNew[id].velocity;
+
+        // Todo: bucketing, momentum?
+        for(var i = 0u; i < arrayLength(&circlesOld); i++) {
+            if(i == id) {continue;}
+            let delta = circlesNew[id].center - circlesOld[i].center;
+            let dist = length(delta);
+            // TODO: branchless
+            let contactDist = circlesNew[id].radius + circlesOld[i].radius;
+            let diff = contactDist - dist;
+            if(diff > 0) {
+                // TODO: uneven movement
+                circlesNew[id].center += (delta * (diff/contactDist)) / 2.;
+            }
+        }
 
         let wall = 1.;
         
