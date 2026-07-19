@@ -1,8 +1,6 @@
 // Polyfill to work around lack of full linear indexing support under webkit
 
 // Adapted from https://webgpufundamentals.org/webgpu/lessons/webgpu-compute-shaders.html
-
-// TODO: Closer investigation: possible source of bugs????
 export const global_invocation_index = /* wgsl */ `
 fn global_invocation_index (workgroup_id : vec3<u32>,
                             local_invocation_index: u32,

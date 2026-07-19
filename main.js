@@ -13,7 +13,7 @@ let pointerHeldLastFrame = false;
 const PHYSICS_TICKS_PER_FRAME = 4;
 const GRAVITY_FACTOR = 360000;
 const POLYS_PER_CIRCLE = 30;
-const CIRCLE_COUNT = 6000;
+const CIRCLE_COUNT = 500;
 const MIN_RADIUS = .011;
 const MAX_RADIUS = .011;
 const EXTRA_SHAKE_POWER=5;
@@ -52,7 +52,15 @@ const main = async () => {
     const computeModule = device.createShaderModule({
         label: "compute shader module",
         code:computeShaderCode
-    })
+    });
+    const sortPipeline = device.createComputePipeline({
+        label: "sort pipeline",
+        layout: "auto",
+        compute: {
+            module: computeModule,
+            entryPoint: "sortAndDisplay"
+        }
+    });
     const physicsPipeline = device.createComputePipeline({
         label: "physics pipeline",
         layout: "auto",
@@ -126,6 +134,25 @@ const main = async () => {
                GPUBufferUsage.COPY_DST 
     });
 
+    const sortPingToPongBindGroup = device.createBindGroup({
+        label: "sortPingToPongBindGroup",
+        layout: sortPipeline.getBindGroupLayout(0),
+        entries: [
+            {binding: 0, resource: circlePingBuffer},
+            {binding: 1, resource: circlePongBuffer},
+            {binding: 2, resource: uniformBuffer}
+        ]
+    });
+    const sortPongToPingBindGroup = device.createBindGroup({
+        label: "sortPongToPingBindGroup",
+        layout: sortPipeline.getBindGroupLayout(0),
+        entries: [
+            {binding: 0, resource: circlePongBuffer},
+            {binding: 1, resource: circlePingBuffer},
+            {binding: 2, resource: uniformBuffer}
+        ]
+    });
+
     const physicsPingToPongBindGroup = device.createBindGroup({
         label: "physicsPingToPongBindGroup",
         layout: physicsPipeline.getBindGroupLayout(0),
@@ -180,13 +207,26 @@ const main = async () => {
     const render = async() => {
         const encoder = device.createCommandEncoder({label: "encoder"});
 
-        for(let i = 0; i < PHYSICS_TICKS_PER_FRAME; i++) {
-            let computePass = encoder.beginComputePass();
-            computePass.setPipeline(physicsPipeline);
-            computePass.setBindGroup(0, (frameCount + i) % 2 == 0 ? physicsPingToPongBindGroup: physicsPongToPingBindGroup);
-            computePass.dispatchWorkgroups(Math.ceil(circles.count/64)), Math.ceil(circles.count/64, 1);
-            computePass.end();
-        }
+        // later this will be incorporated into the physics tick loop
+        // dummy i for now
+        let i = 0;
+        ////////// SORTING TEST /////////
+        let computePass = encoder.beginComputePass();
+        computePass.setPipeline(sortPipeline);
+        computePass.setBindGroup(0, (frameCount + i) % 2 == 0 ? sortPingToPongBindGroup: sortPongToPingBindGroup);
+        computePass.dispatchWorkgroups(1); // Later we will parallelize
+        computePass.end();
+        ////////////////////////////////
+
+
+
+        // for(let i = 0; i < PHYSICS_TICKS_PER_FRAME; i++) {
+        //     let computePass = encoder.beginComputePass();
+        //     computePass.setPipeline(physicsPipeline);
+        //     computePass.setBindGroup(0, (frameCount + i) % 2 == 0 ? physicsPingToPongBindGroup: physicsPongToPingBindGroup);
+        //     computePass.dispatchWorkgroups(Math.ceil(circles.count/64)), Math.ceil(circles.count/64, 1);
+        //     computePass.end();
+        // }
 
         renderPassDescriptor.colorAttachments[0].view = ctx.getCurrentTexture().createView();
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
