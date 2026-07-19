@@ -10,10 +10,11 @@ let pointerLoc = [0, 0];
 let pointerHeldNow = false;
 let pointerHeldLastFrame = false;
 
-const GRAVITY_FACTOR = 16000;
+const GRAVITY_FACTOR = 18000;
 const POLYS_PER_CIRCLE = 30;
 const CIRCLE_COUNT = 200;
-const RADIUS = .05;
+const MIN_RADIUS = .05;
+const MAX_RADIUS = .05;
 const EXTRA_SHAKE_POWER=5;
 
 const main = async () => {
@@ -91,7 +92,7 @@ const main = async () => {
         ]
     };
 
-    const circles = randCircles(CIRCLE_COUNT, RADIUS);
+    const circles = randCircles(CIRCLE_COUNT, MIN_RADIUS, MAX_RADIUS);
 
     const circlePingBuffer = device.createBuffer({
         label: "circlePingBuffer",
