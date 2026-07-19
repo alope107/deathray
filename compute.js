@@ -19,56 +19,59 @@ ${uniformsStruct.code}
                                          1 /* CHANGE ME WHEN WORKGROUP SIZE CHANGES */);
         if(id > arrayLength(&circlesOld)) {return;}
 
-        circlesNew[id].grabbed = select(0u, 1u, 
-                                       (uniforms.pointerHeld > 0 && circlesOld[id].grabbed>0) // grabbed if previously grabbed and not yet released
-                                       || (uniforms.pointerPressed > 0&& length(circlesOld[id].center - uniforms.pointerLoc) < circlesOld[id].radius)); // grabbed if pressed on this frame
+        var newMe = circlesNew[id]; // does this slow down making a copy?
+        let oldMe = circlesOld[id];
+        newMe.grabbed = select(0u, 1u, 
+                                       (uniforms.pointerHeld > 0 && oldMe.grabbed>0) // grabbed if previously grabbed and not yet released
+                                       || (uniforms.pointerPressed > 0&& length(oldMe.center - uniforms.pointerLoc) < oldMe.radius)); // grabbed if pressed on this frame
 
-        let gravity = select(uniforms.gravity, vec2f(), circlesNew[id].grabbed > 0);// no gravity if grabbed
-        circlesNew[id].velocity = circlesOld[id].velocity + gravity;
-        circlesNew[id].center = circlesOld[id].center + circlesNew[id].velocity;
+        let gravity = select(uniforms.gravity, vec2f(), newMe.grabbed > 0);// no gravity if grabbed
+        newMe.velocity = oldMe.velocity + gravity;
+        newMe.center = oldMe.center + newMe.velocity;
 
         // Todo: bucketing, momentum?
         for(var i = 0u; i < arrayLength(&circlesOld); i++) {
             if(i == id) {continue;}
-            let delta = circlesNew[id].center - circlesOld[i].center;
+            let delta = newMe.center - circlesOld[i].center;
             let dist = length(delta);
             // TODO: branchless
-            let contactDist = circlesNew[id].radius + circlesOld[i].radius;
+            let contactDist = newMe.radius + circlesOld[i].radius;
             let diff = contactDist - dist;
             if(diff > 0) {
                 // TODO: uneven movement
-                circlesNew[id].center += (delta * (diff/dist)) / 2;
-                circlesNew[id].velocity += (delta * (diff/dist)) / 2;
+                newMe.center += (delta * (diff/dist)) / 2;
+                newMe.velocity += (delta * (diff/dist)) / 2;
             }
         }
 
-        let pointerDelta = select(vec2f(), uniforms.pointerLoc - circlesNew[id].center, circlesNew[id].grabbed > 0);
-        circlesNew[id].velocity += pointerDelta;
-        circlesNew[id].center += pointerDelta;
+        let pointerDelta = select(vec2f(), uniforms.pointerLoc - newMe.center, newMe.grabbed > 0);
+        newMe.velocity += pointerDelta;
+        newMe.center += pointerDelta;
 
 
         // TODO: move to uniforms
         let wall = 1.;
         let restitution = .3;
 
-        let r = circlesNew[id].radius;
-        let c = circlesNew[id].center;
+        let r = newMe.radius;
+        let c = newMe.center;
         // TODO: branchless?
         if(c.x > wall - r) {
-            circlesNew[id].center.x = wall - r;
-            circlesNew[id].velocity.x *= -restitution;
+            newMe.center.x = wall - r;
+            newMe.velocity.x *= -restitution;
         }
         if(c.x < -wall + r) {
-            circlesNew[id].center.x = -wall + r;
-            circlesNew[id].velocity.x *= -restitution;
+            newMe.center.x = -wall + r;
+            newMe.velocity.x *= -restitution;
         }
         if(c.y > wall - r) {
-            circlesNew[id].center.y = wall - r;
-            circlesNew[id].velocity.y *= -restitution;
+            newMe.center.y = wall - r;
+            newMe.velocity.y *= -restitution;
         }
         if(c.y < -wall + r) {
-            circlesNew[id].center.y = -wall + r;
-            circlesNew[id].velocity.y *= -restitution;
+            newMe.center.y = -wall + r;
+            newMe.velocity.y *= -restitution;
         }
+        circlesNew[id] = newMe;
     }
 `;
