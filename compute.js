@@ -46,25 +46,29 @@ ${uniformsStruct.code}
         circlesNew[id].velocity += pointerDelta;
         circlesNew[id].center += pointerDelta;
 
-        // Treat walls the same way we treat the other circles?
+
+        // TODO: move to uniforms
         let wall = 1.;
-        let fakes = array(
-            vec2f(circlesNew[id].center.x, 1),
-            vec2f(circlesNew[id].center.x, -1),
-            vec2f(1, circlesNew[id].center.y),
-            vec2f(-1, circlesNew[id].center.y)
-        );
-        for(var i = 0u; i < 4; i++) {
-            let delta = circlesNew[id].center - fakes[i];
-            let dist = length(delta);
-            // TODO: branchless
-            let contactDist = circlesNew[id].radius;
-            let diff = contactDist - dist;
-            if(diff > 0) {
-                // TODO: uneven movement
-                circlesNew[id].center += (delta * (diff/dist));
-                circlesNew[id].velocity += (delta * (diff/dist));
-            }
+        let restitution = .3;
+
+        let r = circlesNew[id].radius;
+        let c = circlesNew[id].center;
+        // TODO: branchless?
+        if(c.x > wall - r) {
+            circlesNew[id].center.x = wall - r;
+            circlesNew[id].velocity.x *= -restitution;
+        }
+        if(c.x < -wall + r) {
+            circlesNew[id].center.x = -wall + r;
+            circlesNew[id].velocity.x *= -restitution;
+        }
+        if(c.y > wall - r) {
+            circlesNew[id].center.y = wall - r;
+            circlesNew[id].velocity.y *= -restitution;
+        }
+        if(c.y < -wall + r) {
+            circlesNew[id].center.y = -wall + r;
+            circlesNew[id].velocity.y *= -restitution;
         }
     }
 `;
