@@ -8,7 +8,8 @@ export const circleStruct = (() => {
             center: vec2f, // 8 bytes
             velocity: vec2f, // 8 bytes
             radius: f32, // 4 bytes
-            // pad 12 bytes
+            grabbed: u32 // 4b ytes
+            // pad 8 bytes
         }  // total 48 bytes
     `
     const byteCount = 48;
@@ -22,6 +23,7 @@ export const circleStruct = (() => {
                 centerView: new Float32Array(data, 16),
                 velocityView: new Float32Array(data, 24),
                 radiusView: new Float32Array(data, 32),
+                grabbedView: new Uint32Array(data, 36)
             },
             count: circleCount
         };
@@ -34,6 +36,7 @@ export const circleStruct = (() => {
             centerView.set(center, i*floatCount);
             velocityView.set(velocity, i*floatCount);
             radiusView.set([radius], i*floatCount);
+            // grabbed and pad set to 0s by default
         });
         return data;
     };

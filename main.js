@@ -4,7 +4,11 @@ import { startResizeObservation } from "./resize.js";
 import { circleStruct, uniformsStruct } from "./structs.js";
 import { randCircles } from "./random.js";
 
+// JS managed game state
 let accel = {x: 0, y:-9.8, z:0};
+let pointerLoc = [0, 0];
+let pointerHeldNow = false;
+let pointerHeldLastFrame = false;
 
 const GRAVITY_FACTOR = 16000;
 const POLYS_PER_CIRCLE = 30;
@@ -159,6 +163,15 @@ const main = async () => {
     device.queue.writeBuffer(circlePongBuffer, 0, circles.data);
     device.queue.writeBuffer(uniformBuffer, 0, uniform.data);
 
+    renderTarget.addEventListener("pointermove", () => {
+        // Rescale to clip space, the scaling used by the compute/vertex shaders
+        pointerLoc = [(2 * event.clientX / renderTarget.width) - 1, -((2 * event.clientY / renderTarget.height) - 1)];
+    });
+    renderTarget.addEventListener('pointerdown', () => { pointerHeldNow = 1; });
+    renderTarget.addEventListener('pointerup', () => { pointerHeldNow = 0; });
+    renderTarget.addEventListener('pointeleave', () => { pointerHeldNow = 0; });
+    renderTarget.addEventListener('pointercancel', () => { pointerHeldNow = 0; });
+
 
     let frameCount = 0;
     const render = async() => {
@@ -186,10 +199,11 @@ const main = async () => {
     const animationFrame = async (timestamp) => {
         uniform = uniformsStruct.createFilled({
             gravity: [accel.x/GRAVITY_FACTOR, accel.y/GRAVITY_FACTOR],
-            pointerLoc: [0, 0],//TODO
-            pointerHeld: 0,// TODO
-            pointerPressed: 0 // TODO
+            pointerLoc: pointerLoc,
+            pointerHeld: pointerHeldNow,
+            pointerPressed: !pointerHeldLastFrame && pointerHeldNow 
         });
+        pointerHeldLastFrame = pointerHeldNow;
         device.queue.writeBuffer(uniformBuffer, 0, uniform.data);
         render();
         requestAnimationFrame(animationFrame);
