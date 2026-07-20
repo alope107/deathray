@@ -60,14 +60,6 @@ const main = async () => {
             entryPoint: "sortAndDisplay"
         }
     });
-    const physicsPipeline = device.createComputePipeline({
-        label: "physics pipeline",
-        layout: "auto",
-        compute: {
-            module: computeModule,
-            entryPoint: "applyPhysics"
-        }
-    });
 
     const renderModule = device.createShaderModule({
         label: "render module",
@@ -152,25 +144,6 @@ const main = async () => {
         ]
     });
 
-    const physicsPingToPongBindGroup = device.createBindGroup({
-        label: "physicsPingToPongBindGroup",
-        layout: physicsPipeline.getBindGroupLayout(0),
-        entries: [
-            {binding: 0, resource: circlePingBuffer},
-            {binding: 1, resource: circlePongBuffer},
-            {binding: 2, resource: uniformBuffer}
-        ]
-    });
-    const physicsPongToPingBindGroup = device.createBindGroup({
-        label: "physicsPongToPingBindGroup",
-        layout: physicsPipeline.getBindGroupLayout(0),
-        entries: [
-            {binding: 0, resource: circlePongBuffer},
-            {binding: 1, resource: circlePingBuffer},
-            {binding: 2, resource: uniformBuffer}
-        ]
-    });
-
     const renderPingBindGroup = device.createBindGroup({
         label: "renderPingBindGroup",
         layout: renderPipeline.getBindGroupLayout(0),
@@ -217,15 +190,6 @@ const main = async () => {
         computePass.end();
         ////////////////////////////////
 
-
-
-        // for(let i = 0; i < PHYSICS_TICKS_PER_FRAME; i++) {
-        //     let computePass = encoder.beginComputePass();
-        //     computePass.setPipeline(physicsPipeline);
-        //     computePass.setBindGroup(0, (frameCount + i) % 2 == 0 ? physicsPingToPongBindGroup: physicsPongToPingBindGroup);
-        //     computePass.dispatchWorkgroups(Math.ceil(circles.count/64)), Math.ceil(circles.count/64, 1);
-        //     computePass.end();
-        // }
 
         renderPassDescriptor.colorAttachments[0].view = ctx.getCurrentTexture().createView();
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
