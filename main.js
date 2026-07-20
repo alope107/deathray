@@ -1,6 +1,5 @@
 import { computeShaderCode } from "./compute.js";
 import { renderShaderCode } from "./render.js";
-import { startResizeObservation } from "./resize.js";
 import { circleStruct, uniformsStruct } from "./structs.js";
 import { randCircles } from "./random.js";
 
@@ -34,7 +33,7 @@ const main = async () => {
         return;
     }
 
-    startResizeObservation(renderTarget, device.limits.maxTextureDimension2D);
+    // startResizeObservation(renderTarget, device.limits.maxTextureDimension2D);
 
     // These errors are automatically surfaced in the chrome terminal,
     // but need to be explicitly listened for on webkit
