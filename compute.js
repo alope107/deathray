@@ -22,12 +22,14 @@ ${uniformsStruct.code}
         if(id > 0) {return;}
         _ = uniforms.gravity.x;
 
-        insertionSort(0, arrayLength(&circlesOld));
-        let margin = 2. / f32(arrayLength(&circlesOld));
-        for(var i =  0u; i < arrayLength(&circlesOld); i++) {
-            var circle = circlesOld[i];
-            circle.center.x = -1 + (margin * f32(i));
-            circlesNew[i] = circle;
+        if(uniforms.pointerHeld > 0) {
+            insertionSort(0, arrayLength(&circlesOld));        
+            let margin = 2. / f32(arrayLength(&circlesOld));
+            for(var i =  0u; i < arrayLength(&circlesOld); i++) {
+                var circle = circlesOld[i];
+                circle.center.x = -1 + (margin * f32(i));
+                circlesNew[i] = circle;
+            }
         }
 }
 
