@@ -11,8 +11,6 @@ ${uniformsStruct.code}
 
 // Need write access to old solely for sorting purposes
 @group(0) @binding(0) var<storage, read_write> circlesOld : array<Circle>; 
-@group(0) @binding(1) var<storage, read_write> circlesNew : array<Circle>;
-@group(0) @binding(2) var<uniform> uniforms : Uniforms;
 
 @compute @workgroup_size(1) fn sortAndDisplay(@builtin(workgroup_id) workgroup_id : vec3<u32>,
                                               @builtin(local_invocation_index) local_invocation_index: u32,
@@ -20,14 +18,7 @@ ${uniformsStruct.code}
         let id = global_invocation_index(workgroup_id, local_invocation_index, num_workgroups,
                                          1 /* CHANGE ME WHEN WORKGROUP SIZE CHANGES */);
         if(id > 0) {return;}
-        _ = uniforms.gravity.x;
 
         insertionSort(0, arrayLength(&circlesOld));
-        let margin = 2. / f32(arrayLength(&circlesOld));
-        for(var i =  0u; i < arrayLength(&circlesOld); i++) {
-            var circle = circlesOld[i];
-            circle.center.x = -1 + (margin * f32(i));
-            circlesNew[i] = circle;
-        }
 }
 `;

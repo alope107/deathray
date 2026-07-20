@@ -130,17 +130,6 @@ const main = async () => {
         layout: sortPipeline.getBindGroupLayout(0),
         entries: [
             {binding: 0, resource: circlePingBuffer},
-            {binding: 1, resource: circlePongBuffer},
-            {binding: 2, resource: uniformBuffer}
-        ]
-    });
-    const sortPongToPingBindGroup = device.createBindGroup({
-        label: "sortPongToPingBindGroup",
-        layout: sortPipeline.getBindGroupLayout(0),
-        entries: [
-            {binding: 0, resource: circlePongBuffer},
-            {binding: 1, resource: circlePingBuffer},
-            {binding: 2, resource: uniformBuffer}
         ]
     });
 
@@ -151,18 +140,10 @@ const main = async () => {
             {binding: 0, resource: circlePingBuffer},
         ]
     });
-    const renderPongBindGroup = device.createBindGroup({
-        label: "renderPongBindGroup",
-        layout: renderPipeline.getBindGroupLayout(0),
-        entries: [
-            {binding: 0, resource: circlePongBuffer},
-        ]
-    });
 
 
 
     device.queue.writeBuffer(circlePingBuffer, 0, circles.data);
-    device.queue.writeBuffer(circlePongBuffer, 0, circles.data);
     device.queue.writeBuffer(uniformBuffer, 0, uniform.data);
 
     renderTarget.addEventListener("pointermove", () => {
@@ -185,7 +166,7 @@ const main = async () => {
         ////////// SORTING TEST /////////
         let computePass = encoder.beginComputePass();
         computePass.setPipeline(sortPipeline);
-        computePass.setBindGroup(0, (frameCount + i) % 2 == 0 ? sortPingToPongBindGroup: sortPongToPingBindGroup);
+        computePass.setBindGroup(0, sortPingToPongBindGroup);
         computePass.dispatchWorkgroups(1); // Later we will parallelize
         computePass.end();
         ////////////////////////////////
@@ -194,7 +175,7 @@ const main = async () => {
         renderPassDescriptor.colorAttachments[0].view = ctx.getCurrentTexture().createView();
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(renderPipeline);
-        renderPass.setBindGroup(0, frameCount % 2 == 0 ? renderPongBindGroup : renderPingBindGroup);
+        renderPass.setBindGroup(0, renderPingBindGroup);
         renderPass.draw(2*POLYS_PER_CIRCLE + 1, circles.count);
         renderPass.end();
 
