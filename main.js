@@ -1,6 +1,6 @@
 import { computeShaderCode } from "./compute.js";
 import { renderShaderCode } from "./render.js";
-import { circleStruct, uniformsStruct } from "./structs.js";
+import { circleStruct } from "./structs.js";
 import { randCircles } from "./random.js";
 
 // JS managed game state
@@ -103,20 +103,6 @@ const main = async () => {
                GPUBufferUsage.VERTEX
     });
 
-
-    let uniform = uniformsStruct.createFilled({
-            gravity: [accel.x/GRAVITY_FACTOR, accel.y/GRAVITY_FACTOR],
-            pointerLoc: [0, 0],//TODO
-            pointerHeld: 0,// TODO
-            pointerPressed: 0 // TODO
-        });
-    const uniformBuffer = device.createBuffer({
-        label: "uniform buffer",
-        size: uniform.data.byteLength,
-        usage: GPUBufferUsage.UNIFORM | 
-               GPUBufferUsage.COPY_DST 
-    });
-
     const sortPingToPongBindGroup = device.createBindGroup({
         label: "sortPingToPongBindGroup",
         layout: sortPipeline.getBindGroupLayout(0),
@@ -136,7 +122,6 @@ const main = async () => {
 
 
     device.queue.writeBuffer(circlePingBuffer, 0, circles.data);
-    device.queue.writeBuffer(uniformBuffer, 0, uniform.data);
 
     renderTarget.addEventListener("pointermove", () => {
         // Rescale to clip space, the scaling used by the compute/vertex shaders
@@ -177,14 +162,6 @@ const main = async () => {
     };
 
     const animationFrame = async (timestamp) => {
-        uniform = uniformsStruct.createFilled({
-            gravity: [accel.x/GRAVITY_FACTOR, accel.y/GRAVITY_FACTOR],
-            pointerLoc: pointerLoc,
-            pointerHeld: pointerHeldNow,
-            pointerPressed: !pointerHeldLastFrame && pointerHeldNow 
-        });
-        pointerHeldLastFrame = pointerHeldNow;
-        device.queue.writeBuffer(uniformBuffer, 0, uniform.data);
         render();
         requestAnimationFrame(animationFrame);
     };
