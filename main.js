@@ -3,19 +3,6 @@ import { renderShaderCode } from "./render.js";
 import { circleStruct } from "./structs.js";
 import { randCircles } from "./random.js";
 
-// JS managed game state
-let accel = {x: 0, y:-9.8, z:0};
-let pointerLoc = [0, 0];
-let pointerHeldNow = false;
-let pointerHeldLastFrame = false;
-
-const PHYSICS_TICKS_PER_FRAME = 4;
-const GRAVITY_FACTOR = 360000;
-const POLYS_PER_CIRCLE = 30;
-const CIRCLE_COUNT = 500;
-const MIN_RADIUS = .011;
-const MAX_RADIUS = .011;
-const EXTRA_SHAKE_POWER=5;
 
 const main = async () => {
     const device = await (await navigator.gpu?.requestAdapter( {
@@ -32,14 +19,6 @@ const main = async () => {
         console.error("No WebGPU support :(");
         return;
     }
-
-    // startResizeObservation(renderTarget, device.limits.maxTextureDimension2D);
-
-    // These errors are automatically surfaced in the chrome terminal,
-    // but need to be explicitly listened for on webkit
-    device.addEventListener("uncapturederror", (e) => {
-        console.error("Uncaptured error: ", e.error.message);
-    });
 
     const renderFormat = navigator.gpu.getPreferredCanvasFormat();
     const ctx = renderTarget.getContext("webgpu");
@@ -63,7 +42,7 @@ const main = async () => {
 
     const renderModule = device.createShaderModule({
         label: "render module",
-        code: renderShaderCode(POLYS_PER_CIRCLE)
+        code: renderShaderCode(6)
     });
     const renderPipeline = device.createRenderPipeline({
         label: "render pipeline",
@@ -92,7 +71,7 @@ const main = async () => {
         ]
     };
 
-    const circles = randCircles(CIRCLE_COUNT, MIN_RADIUS, MAX_RADIUS);
+    const circles = randCircles(10, .1, .2);
 
     const circlePingBuffer = device.createBuffer({
         label: "circlePingBuffer",
@@ -119,41 +98,21 @@ const main = async () => {
         ]
     });
 
-
-
     device.queue.writeBuffer(circlePingBuffer, 0, circles.data);
 
-    renderTarget.addEventListener("pointermove", () => {
-        // Rescale to clip space, the scaling used by the compute/vertex shaders
-        pointerLoc = [(2 * event.clientX / renderTarget.width) - 1, -((2 * event.clientY / renderTarget.height) - 1)];
-    });
-    renderTarget.addEventListener('pointerdown', () => { pointerHeldNow = 1; });
-    renderTarget.addEventListener('pointerup', () => { pointerHeldNow = 0; });
-    renderTarget.addEventListener('pointeleave', () => { pointerHeldNow = 0; });
-    renderTarget.addEventListener('pointercancel', () => { pointerHeldNow = 0; });
-
-
-    let frameCount = 0;
     const render = async() => {
         const encoder = device.createCommandEncoder({label: "encoder"});
-
-        // later this will be incorporated into the physics tick loop
-        // dummy i for now
-        let i = 0;
-        ////////// SORTING TEST /////////
         let computePass = encoder.beginComputePass();
         computePass.setPipeline(sortPipeline);
         computePass.setBindGroup(0, sortPingToPongBindGroup);
         computePass.dispatchWorkgroups(1); 
         computePass.end();
-        ////////////////////////////////
-
 
         renderPassDescriptor.colorAttachments[0].view = ctx.getCurrentTexture().createView();
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(renderPipeline);
         renderPass.setBindGroup(0, renderPingBindGroup);
-        renderPass.draw(2*POLYS_PER_CIRCLE + 1, circles.count);
+        renderPass.draw(13, circles.count);
         renderPass.end();
 
         const commandBuffer = encoder.finish();
@@ -168,27 +127,4 @@ const main = async () => {
     requestAnimationFrame(animationFrame);
 };
 
-const initializeAccelerometer = async (e) => {
-    document.getElementById("prompt").remove();
-    window.addEventListener("devicemotion", (event) => {
-        let accelInclG = event.accelerationIncludingGravity;
-        let accelWithoutG = event.acceleration;
-        if(accelInclG.x != null) {
-            accel.x = (accelInclG.x +accelWithoutG.x*EXTRA_SHAKE_POWER)*-1;
-            accel.y = (accelInclG.y +accelWithoutG.y*EXTRA_SHAKE_POWER)*-1;
-            accel.z = (accelInclG.z +accelWithoutG.z*EXTRA_SHAKE_POWER);
-        }
-    });
-    main();
-}
-
-// Only need user input if on mobile so accelerometer can be accessed
-// Otherwise just start immedately on desktop
-if(!window.matchMedia('(hover: hover)').matches && window.matchMedia('(pointer: coarse)').matches) {
-    let userPrompt = document.body.appendChild(document.createElement("h1"));
-    userPrompt.innerText = "Press me";
-    userPrompt.id="prompt";
-    userPrompt.addEventListener("pointerup", initializeAccelerometer);
-} else {
-    main();
-}
+main();
