@@ -99,15 +99,7 @@ const main = async () => {
         size: circles.data.byteLength,
         usage: GPUBufferUsage.STORAGE |
                GPUBufferUsage.COPY_DST |
-            //    GPUBufferUsage.COPY_SRC | // used for debugging
-               GPUBufferUsage.VERTEX
-    });
-    const circlePongBuffer = device.createBuffer({
-        label: "circlePongBuffer",
-        size: circles.data.byteLength,
-        usage: GPUBufferUsage.STORAGE |
-               GPUBufferUsage.COPY_DST |
-            //    GPUBufferUsage.COPY_SRC | // used for debugging
+               GPUBufferUsage.COPY_SRC | // used for debugging
                GPUBufferUsage.VERTEX
     });
 
@@ -167,7 +159,7 @@ const main = async () => {
         let computePass = encoder.beginComputePass();
         computePass.setPipeline(sortPipeline);
         computePass.setBindGroup(0, sortPingToPongBindGroup);
-        computePass.dispatchWorkgroups(1); // Later we will parallelize
+        computePass.dispatchWorkgroups(1); 
         computePass.end();
         ////////////////////////////////
 
