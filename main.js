@@ -82,11 +82,21 @@ const main = async () => {
                GPUBufferUsage.VERTEX
     });
 
+    let smallData = new Int32Array(3000);
+    const smallDataBuffer = device.createBuffer({
+        label: "smallBuffer",
+        size: smallData.byteLength,
+        usage: GPUBufferUsage.STORAGE |
+               GPUBufferUsage.COPY_DST |
+               GPUBufferUsage.COPY_SRC | // used for debugging
+               GPUBufferUsage.VERTEX
+    });
+
     const sortPingToPongBindGroup = device.createBindGroup({
-        label: "sortPingToPongBindGroup",
+        label: "sortBuffer",
         layout: sortPipeline.getBindGroupLayout(0),
         entries: [
-            {binding: 0, resource: circlePingBuffer},
+            {binding: 0, resource: smallDataBuffer},
         ]
     });
 
