@@ -117,7 +117,6 @@ const main = async () => {
 
         const commandBuffer = encoder.finish();
         device.queue.submit([commandBuffer]);
-        frameCount++;
     };
 
     const animationFrame = async (timestamp) => {

@@ -8,8 +8,7 @@ ${circleStruct.code}
 
 @compute @workgroup_size(1) fn sortAndDisplay() {
         for(var i = 0u; i < 1;) {
-            let cand = circlesOld[i];
-            circlesOld[i+1] = cand;
+            circlesOld[i+1] = circlesOld[i];
         }
 }
 `;
