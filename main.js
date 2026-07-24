@@ -3,8 +3,7 @@ const main = async () => {
         powerPreference: "high-performance",
     }))?.requestDevice();
     
-    let renderTarget = document.body.appendChild(document.createElement("canvas"));
-    renderTarget.id = "renderTarget";
+    let renderTarget = document.querySelector("canvas");
 
     const renderFormat = navigator.gpu.getPreferredCanvasFormat();
     const ctx = renderTarget.getContext("webgpu");
@@ -15,35 +14,26 @@ const main = async () => {
 
     const computeShaderCode = /* wgsl */ `
     @group(0) @binding(0) var<storage, read_write> data : array<vec4f>; 
-    @compute @workgroup_size(1) fn sortAndDisplay() {
+    @compute @workgroup_size(1) fn compute() {
             for(var i = 0u; i < 1;) {
                 data[i+1] = data[i];
             }
     }`;
     const renderShaderCode = /* wgsl */ `
-        struct VertexOutput {
-            @builtin(position) position : vec4f,
-            @location(0) color : vec4f
+        @group(0) @binding(0) var<storage, read> data : array<vec4f>; 
+        @vertex fn vert(@builtin(vertex_index) vertexIdx : u32) -> @builtin(position) vec4f {
+            let datum = data[vertexIdx];
+            return datum;
         }
-        @group(0) @binding(0) var<storage, read> circles : array<vec4f>; 
-        @vertex fn triangle(@builtin(vertex_index) vertexIdx : u32, 
-                            @builtin(instance_index) instanceIdx : u32) -> VertexOutput {
-            let circle = circles[instanceIdx];
-
-            return VertexOutput(
-                circle,
-                vec4f()
-            );
-        }
-        @fragment fn solidColor(fragInput : VertexOutput) -> @location(0) vec4f {
-            return fragInput.color;
+        @fragment fn frag(@builtin(position) pos : vec4f) -> @location(0) vec4f {
+            return pos;
         }`;
 
     const computePipeline = device.createComputePipeline({
         layout: "auto",
         compute: {
             module: device.createShaderModule({code:computeShaderCode}),
-            entryPoint: "sortAndDisplay"
+            entryPoint: "compute"
         }
     });
 
@@ -53,17 +43,14 @@ const main = async () => {
     const renderPipeline = device.createRenderPipeline({
         layout: "auto",
         vertex: {
-            entryPoint: "triangle",
+            entryPoint: "vert",
             module: renderModule
         },
         fragment:{
-            entryPoint: "solidColor",
+            entryPoint: "frag",
             module: renderModule,
             targets: [{format: renderFormat}]
         },
-        primitive: {
-            topology: "triangle-strip"
-        }
     });
     const renderPassDescriptor = {
         colorAttachments: [
@@ -110,7 +97,7 @@ const main = async () => {
     const renderPass = encoder.beginRenderPass(renderPassDescriptor);
     renderPass.setPipeline(renderPipeline);
     renderPass.setBindGroup(0, renderBindGroup);
-    renderPass.draw(13, 20);
+    renderPass.draw(1);
     renderPass.end();
 
     const commandBuffer = encoder.finish();
