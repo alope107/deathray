@@ -1,7 +1,5 @@
 import { computeShaderCode } from "./compute.js";
 import { renderShaderCode } from "./render.js";
-import { circleStruct } from "./structs.js";
-import { randCircles } from "./random.js";
 
 
 const main = async () => {
@@ -19,6 +17,8 @@ const main = async () => {
         console.error("No WebGPU support :(");
         return;
     }
+
+    const dataSize = 48*10;
 
     const renderFormat = navigator.gpu.getPreferredCanvasFormat();
     const ctx = renderTarget.getContext("webgpu");
@@ -71,11 +71,9 @@ const main = async () => {
         ]
     };
 
-    const circles = randCircles(10, .1, .2);
-
     const circlePingBuffer = device.createBuffer({
         label: "circlePingBuffer",
-        size: circles.data.byteLength,
+        size: dataSize,
         usage: GPUBufferUsage.STORAGE |
                GPUBufferUsage.COPY_DST |
                GPUBufferUsage.COPY_SRC | // used for debugging
@@ -98,9 +96,9 @@ const main = async () => {
         ]
     });
 
-    device.queue.writeBuffer(circlePingBuffer, 0, circles.data);
+    device.queue.writeBuffer(circlePingBuffer, 0, new ArrayBuffer(dataSize));
 
-    const render = async() => {
+    // const render = async() => {
         const encoder = device.createCommandEncoder({label: "encoder"});
         let computePass = encoder.beginComputePass();
         computePass.setPipeline(sortPipeline);
@@ -112,18 +110,18 @@ const main = async () => {
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(renderPipeline);
         renderPass.setBindGroup(0, renderPingBindGroup);
-        renderPass.draw(13, circles.count);
+        renderPass.draw(13, 20);
         renderPass.end();
 
         const commandBuffer = encoder.finish();
         device.queue.submit([commandBuffer]);
-    };
+    // };
 
-    const animationFrame = async (timestamp) => {
-        render();
-        requestAnimationFrame(animationFrame);
-    };
-    requestAnimationFrame(animationFrame);
+    // const animationFrame = async (timestamp) => {
+    //     render();
+    //     requestAnimationFrame(animationFrame);
+    // };
+    // requestAnimationFrame(animationFrame);
 };
 
 main();

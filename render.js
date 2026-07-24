@@ -1,6 +1,12 @@
-import { circleStruct } from "./structs.js";
 export const renderShaderCode = (polysPerCircle) => /* wgsl */ `
-${circleStruct.code}
+        struct Circle {
+            color: vec4f, // 16 bytes
+            center: vec2f, // 8 bytes
+            velocity: vec2f, // 8 bytes
+            radius: f32, // 4 bytes
+            grabbed: u32 // 4b ytes
+            // pad 8 bytes
+        }  // total 48 bytes
 
 struct VertexOutput {
     @builtin(position) position : vec4f,

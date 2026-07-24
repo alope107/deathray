@@ -1,9 +1,13 @@
-import { circleStruct } from "./structs.js";
-
 export const computeShaderCode = /* wgsl */ `
-${circleStruct.code}
+struct Circle {
+    color: vec4f, // 16 bytes
+    center: vec2f, // 8 bytes
+    velocity: vec2f, // 8 bytes
+    radius: f32, // 4 bytes
+    grabbed: u32 // 4b ytes
+    // pad 8 bytes
+}  // total 48 bytes
 
-// Need write access to old solely for sorting purposes
 @group(0) @binding(0) var<storage, read_write> circlesOld : array<Circle>; 
 
 @compute @workgroup_size(1) fn sortAndDisplay() {
