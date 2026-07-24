@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <script defer>
+    </head>
+    <body>
+        <canvas></canvas>
+        <script>
             const main = async () => {
             const device = await (await navigator.gpu?.requestAdapter( {
                 powerPreference: "high-performance",
@@ -109,8 +112,5 @@
         };
         main();
         </script>
-    </head>
-    <body>
-        <canvas></canvas>
     </body>
 </html>
