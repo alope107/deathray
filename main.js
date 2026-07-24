@@ -1,7 +1,3 @@
-import { computeShaderCode } from "./compute.js";
-import { renderShaderCode } from "./render.js";
-
-
 const main = async () => {
     const device = await (await navigator.gpu?.requestAdapter( {
         powerPreference: "high-performance",
@@ -10,8 +6,6 @@ const main = async () => {
     let renderTarget = document.body.appendChild(document.createElement("canvas"));
     renderTarget.id = "renderTarget";
 
-    const dataSize = 48*10;
-
     const renderFormat = navigator.gpu.getPreferredCanvasFormat();
     const ctx = renderTarget.getContext("webgpu");
     ctx.configure( {
@@ -19,13 +13,36 @@ const main = async () => {
         format: renderFormat
     });
 
-    const computeModule = device.createShaderModule({
-        code:computeShaderCode
-    });
-    const sortPipeline = device.createComputePipeline({
+    const computeShaderCode = /* wgsl */ `
+    @group(0) @binding(0) var<storage, read_write> data : array<vec4f>; 
+    @compute @workgroup_size(1) fn sortAndDisplay() {
+            for(var i = 0u; i < 1;) {
+                data[i+1] = data[i];
+            }
+    }`;
+    const renderShaderCode = /* wgsl */ `
+        struct VertexOutput {
+            @builtin(position) position : vec4f,
+            @location(0) color : vec4f
+        }
+        @group(0) @binding(0) var<storage, read> circles : array<vec4f>; 
+        @vertex fn triangle(@builtin(vertex_index) vertexIdx : u32, 
+                            @builtin(instance_index) instanceIdx : u32) -> VertexOutput {
+            let circle = circles[instanceIdx];
+
+            return VertexOutput(
+                circle,
+                vec4f()
+            );
+        }
+        @fragment fn solidColor(fragInput : VertexOutput) -> @location(0) vec4f {
+            return fragInput.color;
+        }`;
+
+    const computePipeline = device.createComputePipeline({
         layout: "auto",
         compute: {
-            module: computeModule,
+            module: device.createShaderModule({code:computeShaderCode}),
             entryPoint: "sortAndDisplay"
         }
     });
@@ -51,23 +68,23 @@ const main = async () => {
     const renderPassDescriptor = {
         colorAttachments: [
             {
-                // clearValue: [0, 0, 0, 1],
                 loadOp: "clear",
                 storeOp: "store"
             }
         ]
     };
 
+    const dataSize = 48*10;
     const buffer = device.createBuffer({
         size: dataSize,
         usage: GPUBufferUsage.STORAGE |
                GPUBufferUsage.COPY_DST |
-               GPUBufferUsage.COPY_SRC | // used for debugging
+               GPUBufferUsage.COPY_SRC |
                GPUBufferUsage.VERTEX
     });
 
     const computeBindGroup = device.createBindGroup({
-        layout: sortPipeline.getBindGroupLayout(0),
+        layout: computePipeline.getBindGroupLayout(0),
         entries: [
             {binding: 0, resource: buffer},
         ]
@@ -82,9 +99,9 @@ const main = async () => {
 
     device.queue.writeBuffer(buffer, 0, new ArrayBuffer(dataSize));
 
-    const encoder = device.createCommandEncoder({label: "encoder"});
+    const encoder = device.createCommandEncoder();
     let computePass = encoder.beginComputePass();
-    computePass.setPipeline(sortPipeline);
+    computePass.setPipeline(computePipeline);
     computePass.setBindGroup(0, computeBindGroup);
     computePass.dispatchWorkgroups(1); 
     computePass.end();
