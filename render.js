@@ -1,4 +1,4 @@
-export const renderShaderCode = (polysPerCircle) => /* wgsl */ `
+export const renderShaderCode = /* wgsl */ `
         struct Circle {
             color: vec4f, // 16 bytes
             center: vec2f, // 8 bytes

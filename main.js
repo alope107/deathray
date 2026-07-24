@@ -6,17 +6,9 @@ const main = async () => {
     const device = await (await navigator.gpu?.requestAdapter( {
         powerPreference: "high-performance",
     }))?.requestDevice();
-
-    let renderTarget;
-    if(device) {        
-        renderTarget = document.body.appendChild(document.createElement("canvas"));
-        renderTarget.id = "renderTarget";
-    } else {
-        let errorMessage = document.body.appendChild(document.createElement("span"));
-        errorMessage.innerText = "No WebGPU support :( "
-        console.error("No WebGPU support :(");
-        return;
-    }
+    
+    let renderTarget = document.body.appendChild(document.createElement("canvas"));
+    renderTarget.id = "renderTarget";
 
     const dataSize = 48*10;
 
@@ -28,11 +20,9 @@ const main = async () => {
     });
 
     const computeModule = device.createShaderModule({
-        label: "compute shader module",
         code:computeShaderCode
     });
     const sortPipeline = device.createComputePipeline({
-        label: "sort pipeline",
         layout: "auto",
         compute: {
             module: computeModule,
@@ -41,11 +31,9 @@ const main = async () => {
     });
 
     const renderModule = device.createShaderModule({
-        label: "render module",
-        code: renderShaderCode(6)
+        code: renderShaderCode
     });
     const renderPipeline = device.createRenderPipeline({
-        label: "render pipeline",
         layout: "auto",
         vertex: {
             entryPoint: "triangle",
@@ -61,18 +49,16 @@ const main = async () => {
         }
     });
     const renderPassDescriptor = {
-        label: "render pass descriptor",
         colorAttachments: [
             {
-                clearValue: [0, 0, 0, 1],
+                // clearValue: [0, 0, 0, 1],
                 loadOp: "clear",
                 storeOp: "store"
             }
         ]
     };
 
-    const circlePingBuffer = device.createBuffer({
-        label: "circlePingBuffer",
+    const buffer = device.createBuffer({
         size: dataSize,
         usage: GPUBufferUsage.STORAGE |
                GPUBufferUsage.COPY_DST |
@@ -80,48 +66,38 @@ const main = async () => {
                GPUBufferUsage.VERTEX
     });
 
-    const sortPingToPongBindGroup = device.createBindGroup({
-        label: "sortPingToPongBindGroup",
+    const computeBindGroup = device.createBindGroup({
         layout: sortPipeline.getBindGroupLayout(0),
         entries: [
-            {binding: 0, resource: circlePingBuffer},
+            {binding: 0, resource: buffer},
         ]
     });
 
-    const renderPingBindGroup = device.createBindGroup({
-        label: "renderPingBindGroup",
+    const renderBindGroup = device.createBindGroup({
         layout: renderPipeline.getBindGroupLayout(0),
         entries: [
-            {binding: 0, resource: circlePingBuffer},
+            {binding: 0, resource: buffer},
         ]
     });
 
-    device.queue.writeBuffer(circlePingBuffer, 0, new ArrayBuffer(dataSize));
+    device.queue.writeBuffer(buffer, 0, new ArrayBuffer(dataSize));
 
-    // const render = async() => {
-        const encoder = device.createCommandEncoder({label: "encoder"});
-        let computePass = encoder.beginComputePass();
-        computePass.setPipeline(sortPipeline);
-        computePass.setBindGroup(0, sortPingToPongBindGroup);
-        computePass.dispatchWorkgroups(1); 
-        computePass.end();
+    const encoder = device.createCommandEncoder({label: "encoder"});
+    let computePass = encoder.beginComputePass();
+    computePass.setPipeline(sortPipeline);
+    computePass.setBindGroup(0, computeBindGroup);
+    computePass.dispatchWorkgroups(1); 
+    computePass.end();
 
-        renderPassDescriptor.colorAttachments[0].view = ctx.getCurrentTexture().createView();
-        const renderPass = encoder.beginRenderPass(renderPassDescriptor);
-        renderPass.setPipeline(renderPipeline);
-        renderPass.setBindGroup(0, renderPingBindGroup);
-        renderPass.draw(13, 20);
-        renderPass.end();
+    renderPassDescriptor.colorAttachments[0].view = ctx.getCurrentTexture().createView();
+    const renderPass = encoder.beginRenderPass(renderPassDescriptor);
+    renderPass.setPipeline(renderPipeline);
+    renderPass.setBindGroup(0, renderBindGroup);
+    renderPass.draw(13, 20);
+    renderPass.end();
 
-        const commandBuffer = encoder.finish();
-        device.queue.submit([commandBuffer]);
-    // };
-
-    // const animationFrame = async (timestamp) => {
-    //     render();
-    //     requestAnimationFrame(animationFrame);
-    // };
-    // requestAnimationFrame(animationFrame);
+    const commandBuffer = encoder.finish();
+    device.queue.submit([commandBuffer]);
 };
 
 main();
