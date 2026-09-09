@@ -3,38 +3,20 @@
     <head>
     </head>
     <body>
-        <canvas></canvas>
+        <!-- <canvas></canvas> -->
         <script>
             const main = async () => {
             const device = await (await navigator.gpu?.requestAdapter( {
                 powerPreference: "high-performance",
             }))?.requestDevice();
-            
-            let renderTarget = document.querySelector("canvas");
-
-            const renderFormat = navigator.gpu.getPreferredCanvasFormat();
-            const ctx = renderTarget.getContext("webgpu");
-            ctx.configure( {
-                device,
-                format: renderFormat
-            });
 
             const computeShaderCode = `
-            @group(0) @binding(0) var<storage, read_write> data : array<vec4f>; 
+            @group(0) @binding(0) var<storage, read_write> data : array<mat4x4f>; 
             @compute @workgroup_size(1) fn compute() {
                     for(var i = 0u; i < 1;) {
                         data[i+1] = data[i];
                     }
             }`;
-            const renderShaderCode = `
-                @group(0) @binding(0) var<storage, read> data : array<vec4f>; 
-                @vertex fn vert(@builtin(vertex_index) vertexIdx : u32) -> @builtin(position) vec4f {
-                    let datum = data[vertexIdx];
-                    return datum;
-                }
-                @fragment fn frag(@builtin(position) pos : vec4f) -> @location(0) vec4f {
-                    return pos;
-                }`;
 
             const computePipeline = device.createComputePipeline({
                 layout: "auto",
@@ -44,33 +26,9 @@
                 }
             });
 
-            const renderModule = device.createShaderModule({
-                code: renderShaderCode
-            });
-            const renderPipeline = device.createRenderPipeline({
-                layout: "auto",
-                vertex: {
-                    entryPoint: "vert",
-                    module: renderModule
-                },
-                fragment:{
-                    entryPoint: "frag",
-                    module: renderModule,
-                    targets: [{format: renderFormat}]
-                },
-            });
-            const renderPassDescriptor = {
-                colorAttachments: [
-                    {
-                        loadOp: "clear",
-                        storeOp: "store"
-                    }
-                ]
-            };
-
-            const dataSize = 48*10; // Fairly arbitrary
+            const dataSize = 64 * 1000;
             const buffer = device.createBuffer({
-                size: dataSize,
+                size: dataSize, // Fairly arbitrary
                 usage: GPUBufferUsage.STORAGE |
                     GPUBufferUsage.COPY_DST |
                     GPUBufferUsage.COPY_SRC |
@@ -79,13 +37,6 @@
 
             const computeBindGroup = device.createBindGroup({
                 layout: computePipeline.getBindGroupLayout(0),
-                entries: [
-                    {binding: 0, resource: buffer},
-                ]
-            });
-
-            const renderBindGroup = device.createBindGroup({
-                layout: renderPipeline.getBindGroupLayout(0),
                 entries: [
                     {binding: 0, resource: buffer},
                 ]
@@ -100,15 +51,7 @@
             computePass.dispatchWorkgroups(1); 
             computePass.end();
 
-            renderPassDescriptor.colorAttachments[0].view = ctx.getCurrentTexture().createView();
-            const renderPass = encoder.beginRenderPass(renderPassDescriptor);
-            renderPass.setPipeline(renderPipeline);
-            renderPass.setBindGroup(0, renderBindGroup);
-            renderPass.draw(1);
-            renderPass.end();
-
-            const commandBuffer = encoder.finish();
-            device.queue.submit([commandBuffer]);
+            device.queue.submit([encoder.finish()]);
         };
         main();
         </script>
